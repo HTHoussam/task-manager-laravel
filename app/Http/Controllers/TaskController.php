@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
+use Inertia\Inertia;
 
 class TaskController extends Controller
 {
@@ -40,14 +42,18 @@ class TaskController extends Controller
      */
     public function show(Task $task)
     {
-        if ($task->user_id == auth()->id()) {
-            return response()->json([
-                'message' => 'Unauthorized'
-            ], 401);
-        }
-        return response()->json([
-            'data' => $task,
-            'message' => 'task found'
+        // if ($task->user_id == auth()->id()) {
+        //     return response()->json([
+        //         'message' => 'Unauthorized'
+        //     ], 401);
+        // }
+        // return response()->json([
+        //     'data' => $task,
+        //     'message' => 'task found'
+        // ]);
+
+        return Inertia::render('Details', [
+            'task' =>  $task,
         ]);
     }
 

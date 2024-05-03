@@ -168,16 +168,14 @@ const formData = ref<Task>({
     due_date: "",
     status: 0,
 });
-
+console.log("formData.value due date", formData.value.due_date);
 const emit = defineEmits(["close", "save-modal"]);
 watch(
     () => props.taskToEdit,
     (newValue) => {
-        // Update formData when taskToEdit changes
         if (newValue) {
             formData.value = { ...newValue };
         } else {
-            // Reset formData if taskToEdit is null
             formData.value = {
                 id: -1,
                 name: "",

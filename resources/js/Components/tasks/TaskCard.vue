@@ -23,6 +23,11 @@
                 {{ StatusObject[Number(task.status)] }}
             </p>
         </div>
+        <template v-if="task.id !== null">
+            <inertia-link :href="route('tasks.show', { id: task.id })"
+                >View Task Details</inertia-link
+            >
+        </template>
     </div>
 </template>
 

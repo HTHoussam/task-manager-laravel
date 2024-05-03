@@ -1,16 +1,14 @@
 <template>
-    <Head title="Dashboard" />
-
-    <Toaster richColors position="bottom-center" />
+    <Head title="Task Management" />
 
     <AuthenticatedLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Dashboard
+                Task Management
             </h2>
         </template>
 
-        <div class="py-12">
+        <div class="py-12 b-[#e5e7eb]">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
@@ -26,47 +24,16 @@
                             </button>
                         </div>
                         <div class="flex flex-row p-2 justify-center m-4 gap-4">
-                            <div class="gap-2 flex-col justify-start">
-                                <p class="font-medium capitalize">Search:</p>
-                                <input
-                                    class="rounded-lg border border-blue-500"
-                                    v-model="searchTerm"
-                                    type="text"
-                                    placeholder="Search by name"
-                                />
-                            </div>
-                            <div class="gap-2 flex-col justify-start">
-                                <p class="font-medium capitalize">from:</p>
-                                <input
-                                    class="rounded-lg border border-blue-500"
-                                    v-model="startDate"
-                                    type="date"
-                                    placeholder="Start Date"
-                                />
-                            </div>
-                            <div class="gap-2 flex-col justify-start">
-                                <p class="font-medium capitalize">to:</p>
-                                <input
-                                    class="rounded-lg border border-blue-500"
-                                    v-model="endDate"
-                                    type="date"
-                                    placeholder="End Date"
-                                />
-                            </div>
-                            <div class="gap-2 flex-col justify-start">
-                                <p class="font-medium capitalize">Status:</p>
-
-                                <select
-                                    class="rounded-lg border border-blue-500"
-                                    v-model="statusFilter"
-                                >
-                                    <option value="">All</option>
-                                    <option value="0">Pending</option>
-                                    <option value="1">In Progress</option>
-                                    <option value="2">Completed</option>
-                                    <option value="3">Overdue</option>
-                                </select>
-                            </div>
+                            <SearchFilter
+                                v-model="searchTerm"
+                                label="Search"
+                                placeholder="Search by name"
+                            />
+                            <FilterDate
+                                v-model:start="startDate"
+                                v-model:end="endDate"
+                            />
+                            <StatusFilter v-model="statusFilter" />
                         </div>
 
                         <div
@@ -91,7 +58,6 @@
                                 @save-modal="saveModal"
                             />
                         </div>
-                        <!-- Pagination -->
                         <div class="mt-6 flex justify-center">
                             <Pagination
                                 :currentPage="currentPage"
@@ -109,6 +75,9 @@
 <script setup lang="ts">
 import Modal from "@/Components/Modal.vue";
 import Pagination from "@/Components/Pagination.vue";
+import FilterDate from "@/Components/tasks/FilterDate.vue";
+import SearchFilter from "@/Components/tasks/SearchFilter.vue";
+import StatusFilter from "@/Components/tasks/StatusFilter.vue";
 import TaskCard from "@/Components/tasks/TaskCard.vue";
 import { useFetchTasks } from "@/Composables/useFetchTasks";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
@@ -118,20 +87,22 @@ import { Head } from "@inertiajs/vue3";
 import axios from "axios";
 import dayjs from "dayjs";
 import { computed, onMounted, ref } from "vue";
-import { toast, Toaster } from "vue-sonner";
+import { toast } from "vue-sonner";
 
 const taskToEdit = ref<Task | null>(null);
 const currentPage = ref(1);
 const taskId = ref<null | number>(null);
-const perPage = 8;
+const perPage = 6;
 const searchTerm = ref("");
 const startDate = ref(null);
 const endDate = ref(null);
 const statusFilter = ref("");
 
-const { tasks, isLoading, fetchTasks } = useFetchTasks();
-
-const totalPages = computed(() => Math.ceil(tasks.value.length / perPage));
+const { tasks, fetchTasks } = useFetchTasks();
+const totalPages = computed(() => {
+    const total = filteredTasks.value.length;
+    return total > 0 ? Math.ceil(total / perPage) : 4;
+});
 const startIndex = computed(() => (currentPage.value - 1) * perPage);
 const endIndex = computed(() =>
     Math.min(startIndex.value + perPage, tasks.value.length)
@@ -140,7 +111,6 @@ const paginatedTasks = computed(() =>
     tasks.value.slice(startIndex.value, endIndex.value)
 );
 
-// Function to handle page change
 const onPageChange = (page: number) => {
     currentPage.value = page;
 };
