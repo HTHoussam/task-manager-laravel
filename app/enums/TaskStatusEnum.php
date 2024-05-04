@@ -8,7 +8,7 @@ enum TaskStatusEnum: int
     case PENDING = 0;
     case IN_PROGESS = 1;
     case COMPLETED = 2;
-    case OVERDUE = 4;
+    case OVERDUE = 3;
 
     public static function getHumanReadable($value): string
     {

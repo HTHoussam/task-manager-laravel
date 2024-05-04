@@ -58,13 +58,6 @@
                                 @save-modal="saveModal"
                             />
                         </div>
-                        <div class="mt-6 flex justify-center">
-                            <Pagination
-                                :currentPage="currentPage"
-                                :totalPages="totalPages"
-                                @page-change="onPageChange"
-                            />
-                        </div>
                     </div>
                 </div>
             </div>
@@ -74,7 +67,6 @@
 
 <script setup lang="ts">
 import Modal from "@/Components/Modal.vue";
-import Pagination from "@/Components/Pagination.vue";
 import FilterDate from "@/Components/tasks/FilterDate.vue";
 import SearchFilter from "@/Components/tasks/SearchFilter.vue";
 import StatusFilter from "@/Components/tasks/StatusFilter.vue";
@@ -90,30 +82,13 @@ import { computed, onMounted, ref } from "vue";
 import { toast } from "vue-sonner";
 
 const taskToEdit = ref<Task | null>(null);
-const currentPage = ref(1);
 const taskId = ref<null | number>(null);
-const perPage = 6;
 const searchTerm = ref("");
 const startDate = ref(null);
 const endDate = ref(null);
 const statusFilter = ref("");
 
 const { tasks, fetchTasks } = useFetchTasks();
-const totalPages = computed(() => {
-    const total = filteredTasks.value.length;
-    return total > 0 ? Math.ceil(total / perPage) : 4;
-});
-const startIndex = computed(() => (currentPage.value - 1) * perPage);
-const endIndex = computed(() =>
-    Math.min(startIndex.value + perPage, tasks.value.length)
-);
-const paginatedTasks = computed(() =>
-    tasks.value.slice(startIndex.value, endIndex.value)
-);
-
-const onPageChange = (page: number) => {
-    currentPage.value = page;
-};
 
 onMounted(() => {
     fetchTasks();
@@ -122,7 +97,7 @@ const showModal = ref<boolean>(false);
 const toggleEdit = (id: number | null) => {
     showModal.value = true;
     taskId.value = id;
-    const isExist = paginatedTasks.value.find((r) => r.id === id);
+    const isExist = tasks.value.find((r) => r.id === id);
 
     if (isExist && isExist.id) {
         taskToEdit.value = isExist;
@@ -191,7 +166,7 @@ const closeModal = () => {
 };
 
 const filteredTasks = computed(() => {
-    return paginatedTasks.value.filter((task) => {
+    return tasks.value.slice(0, 7).filter((task) => {
         const matchesSearchTerm =
             searchTerm.value && searchTerm.value.length > 0
                 ? task.name
@@ -218,9 +193,5 @@ const filteredTasks = computed(() => {
             matchesStatusFilter
         );
     });
-});
-
-onMounted(() => {
-    fetchTasks();
 });
 </script>

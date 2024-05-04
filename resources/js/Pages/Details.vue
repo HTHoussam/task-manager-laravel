@@ -15,11 +15,6 @@
                             <h3 class="text-lg font-semibold mb-4">
                                 {{ task?.name }}
                             </h3>
-                            <button
-                                class="text-sm text-blue-700 font-semibold hover:text-white hover:bg-blue-500 py-1 px-2 border border-blue-500 rounded-lg"
-                            >
-                                Edit
-                            </button>
                         </div>
                         <p class="text-sm text-gray-600">
                             {{ task?.name }}
