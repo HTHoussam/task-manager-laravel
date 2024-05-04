@@ -5,9 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Response;
 use Inertia\Inertia;
 
 class TaskController extends Controller
@@ -15,10 +14,26 @@ class TaskController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $tasks = Task::query()
+            ->when($request->searchTerm, function ($query, $searchTerm) {
+                $query->where('name', 'like', "%$searchTerm%");
+            })
+            ->when($request->has('status'), function ($query) use ($request) {
+                $query->whereIn('status', $request->status);
+            })
+            ->when($request->has('beforeDate'), function ($query) use ($request) {
+                $query->whereDate('due_date', '<', $request->beforeDate);
+            })
+            ->when($request->has('afterDate'), function ($query) use ($request) {
+                $query->whereDate('due_date', '>', $request->afterDate);
+            })
+            ->paginate();
+
+
         return response()->json([
-            'tasks' => Task::all(),
+            'tasks' => $tasks,
             'message' => 'success'
         ]);
     }
@@ -55,6 +70,11 @@ class TaskController extends Controller
         return Inertia::render('Details', [
             'task' =>  $task,
         ]);
+    }
+
+    public function getTaskDetails(Task $task)
+    {
+        return inertia()->render('Details', compact('task'));
     }
 
     /**

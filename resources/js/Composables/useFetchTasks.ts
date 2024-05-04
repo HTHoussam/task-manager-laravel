@@ -1,21 +1,60 @@
-// import axios and any other necessary dependencies
 import { Task } from "@/types";
 import axios from "axios";
 import dayjs from "dayjs";
 import { ref } from "vue";
 
-// Define a custom composition function to fetch tasks
+interface FetchedData {
+    current_page: number;
+    first_page_url: string;
+    from: number;
+    last_page: number;
+    last_page_url: string;
+    links: Array<{
+        url: string;
+        label: string | null;
+        active: boolean;
+    }>;
+    next_page_url: string | null;
+    path: string;
+    per_page: number;
+    prev_page_url: string | null;
+    to: number;
+    total: number;
+    data: Task[];
+}
+
 export function useFetchTasks() {
-    // Define reactive variables for tasks and loading state
     const tasks = ref<Task[]>([]);
     const isLoading = ref(false);
 
-    // Define the fetchTasks method
-    async function fetchTasks() {
+    async function fetchTasks({
+        searchTerm,
+        beforeDate,
+        afterDate,
+        status,
+    }: {
+        searchTerm?: string;
+        beforeDate?: string;
+        afterDate?: string;
+        status?: string;
+    }) {
         try {
+            console.log("beforeDate", beforeDate);
+            console.log("afterDate", afterDate);
+
             isLoading.value = true;
-            const response = await axios.get<{ tasks: Task[] }>("/api/tasks");
-            tasks.value = response.data.tasks.map((r) => ({
+
+            const response = await axios.get<{
+                tasks: FetchedData;
+            }>(`/api/tasks`, {
+                params: {
+                    searchTerm,
+                    beforeDate,
+                    status,
+                    afterDate,
+                },
+            });
+            tasks.value = response.data.tasks.data.map((r) => ({
                 ...r,
                 due_date: dayjs(r.due_date).format("MMM D, YYYY"),
             }));
@@ -26,7 +65,6 @@ export function useFetchTasks() {
         }
     }
 
-    // Return the fetchTasks method and any other necessary variables
     return {
         tasks,
         isLoading,

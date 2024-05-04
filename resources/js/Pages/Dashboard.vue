@@ -40,7 +40,7 @@
                             class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6"
                         >
                             <div
-                                v-for="task in filteredTasks"
+                                v-for="task in tasks"
                                 :key="task.id"
                                 class="flex flex-col gap-4"
                             >
@@ -76,23 +76,71 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Task } from "@/types";
 import { TaskSchema } from "@/utils/Validation";
 import { Head } from "@inertiajs/vue3";
+import { watchDebounced } from "@vueuse/core";
 import axios from "axios";
 import dayjs from "dayjs";
-import { computed, onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 
 const taskToEdit = ref<Task | null>(null);
 const taskId = ref<null | number>(null);
 const searchTerm = ref("");
-const startDate = ref(null);
-const endDate = ref(null);
+const startDate = ref<string | null>(null);
+const endDate = ref<string | null>(null);
 const statusFilter = ref("");
 
 const { tasks, fetchTasks } = useFetchTasks();
 
 onMounted(() => {
-    fetchTasks();
+    fetchTasks({ searchTerm: searchTerm.value });
 });
+
+watchDebounced(
+    searchTerm,
+    (newValue) => {
+        fetchTasks({ searchTerm: newValue });
+    },
+    { debounce: 500, maxWait: 1000 }
+);
+// watch(
+//     [statusFilter.value, startDate.value, endDate.value],
+//     (newValue) => {
+//         fetchTasks({
+//             beforeDate: newValue.startDate,
+//             afterDate: newValue.endDate,
+//             statusFilter: newValue.statusFilter,
+//         });
+//     },
+//     { deep: true }
+// );
+
+watch(startDate, (newValue) => {
+    fetchTasks({
+        afterDate: newValue,
+        status: statusFilter.value,
+        beforeDate: endDate.value,
+        searchTerm: searchTerm.value,
+    });
+});
+
+watch(endDate, (newValue) => {
+    fetchTasks({
+        beforeDate: newValue,
+        status: statusFilter.value,
+        afterDate: startDate.value,
+        searchTerm: searchTerm.value,
+    });
+});
+
+watch(statusFilter, (newValue) => {
+    fetchTasks({
+        status: newValue,
+        afterDate: startDate.value,
+        beforeDate: endDate.value,
+        searchTerm: searchTerm.value,
+    });
+});
+
 const showModal = ref<boolean>(false);
 const toggleEdit = (id: number | null) => {
     showModal.value = true;
@@ -164,34 +212,5 @@ const closeModal = () => {
     taskId.value = null;
     showModal.value = false;
 };
-
-const filteredTasks = computed(() => {
-    return tasks.value.slice(0, 7).filter((task) => {
-        const matchesSearchTerm =
-            searchTerm.value && searchTerm.value.length > 0
-                ? task.name
-                      .toLowerCase()
-                      .includes(searchTerm.value.toLowerCase())
-                : true;
-
-        const withinStartDateRange = startDate.value
-            ? dayjs(task.due_date).isAfter(dayjs(startDate.value))
-            : true;
-
-        const withinEndDateRange = endDate.value
-            ? dayjs(task.due_date).isBefore(dayjs(endDate.value))
-            : true;
-        const matchesStatusFilter =
-            statusFilter.value !== null && statusFilter.value !== ""
-                ? Number(task.status) === Number(statusFilter.value)
-                : true;
-
-        return (
-            matchesSearchTerm &&
-            withinStartDateRange &&
-            withinEndDateRange &&
-            matchesStatusFilter
-        );
-    });
-});
+// computed(() => fetchTasks(searchTerm.value));
 </script>

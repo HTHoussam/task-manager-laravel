@@ -24,7 +24,7 @@
             </p>
         </div>
         <template v-if="task.id !== null">
-            <inertia-link :href="route('tasks.show', { id: task.id })"
+            <inertia-link :href="route('tasks.details', { task: task.id })"
                 >View Task Details</inertia-link
             >
         </template>
@@ -35,6 +35,7 @@
 import { StatusObject } from "@/constants";
 import { Task } from "@/types";
 import { getStatusColor } from "@/utils/helpers";
+
 defineProps<{
     task: Task;
 }>();
